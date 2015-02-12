@@ -120,16 +120,16 @@ namespace Littlefish.SQLiteSessionStateProvider
                 deleteCmd.CommandText = "DELETE FROM Sessions WHERE SessionId = @SessionId AND ApplicationName = @ApplicationName AND Expires < @Expires";
                 deleteCmd.Parameters.Add(SQLiteHelper.CreateParameter("@SessionId", DbType.String, 80, id));
                 deleteCmd.Parameters.Add(SQLiteHelper.CreateParameter("@ApplicationName", DbType.String, 255, ApplicationName));
-                deleteCmd.Parameters.Add(SQLiteHelper.CreateParameter("@Expires", DbType.DateTime, DateTime.Now));
+                deleteCmd.Parameters.Add(SQLiteHelper.CreateParameter("@Expires", DbType.DateTime, DateTime.UtcNow));
 
                 // SQLiteCommand to insert the new session item.
                 cmd = conn.CreateCommand();
                 cmd.CommandText = "INSERT INTO Sessions (SessionId, ApplicationName, Created, Expires, LockDate, LockId, Timeout, Locked, SessionItems, Flags) Values(@SessionId, @ApplicationName, @Created, @Expires, @LockDate, @LockId, @Timeout, @Locked, @SessionItems, @Flags)";
                 cmd.Parameters.Add(SQLiteHelper.CreateParameter("@SessionId", DbType.String, 80, id));
                 cmd.Parameters.Add(SQLiteHelper.CreateParameter("@ApplicationName", DbType.String, 255, ApplicationName));
-                cmd.Parameters.Add(SQLiteHelper.CreateParameter("@Created", DbType.DateTime, DateTime.Now));
-                cmd.Parameters.Add(SQLiteHelper.CreateParameter("@Expires", DbType.DateTime, DateTime.Now.AddMinutes((Double)item.Timeout)));
-                cmd.Parameters.Add(SQLiteHelper.CreateParameter("@LockDate", DbType.DateTime, DateTime.Now));
+                cmd.Parameters.Add(SQLiteHelper.CreateParameter("@Created", DbType.DateTime, DateTime.UtcNow));
+                cmd.Parameters.Add(SQLiteHelper.CreateParameter("@Expires", DbType.DateTime, DateTime.UtcNow.AddMinutes((Double)item.Timeout)));
+                cmd.Parameters.Add(SQLiteHelper.CreateParameter("@LockDate", DbType.DateTime, DateTime.UtcNow));
                 cmd.Parameters.Add(SQLiteHelper.CreateParameter("@LockId", DbType.Int32, 0));
                 cmd.Parameters.Add(SQLiteHelper.CreateParameter("@Timeout", DbType.Int32, item.Timeout));
                 cmd.Parameters.Add(SQLiteHelper.CreateParameter("@Locked", DbType.Boolean, false));
@@ -141,7 +141,7 @@ namespace Littlefish.SQLiteSessionStateProvider
                 // SQLiteCommand to update the existing session item.
                 cmd = conn.CreateCommand();
                 cmd.CommandText = "UPDATE Sessions SET Expires = @Expires, SessionItems = @SessionItems, Locked = @Locked WHERE SessionId = @SessionId AND ApplicationName = @ApplicationName AND LockId = @LockId";
-                cmd.Parameters.Add(SQLiteHelper.CreateParameter("@Expires", DbType.DateTime, DateTime.Now.AddMinutes((Double)item.Timeout)));
+                cmd.Parameters.Add(SQLiteHelper.CreateParameter("@Expires", DbType.DateTime, DateTime.UtcNow.AddMinutes((Double)item.Timeout)));
                 cmd.Parameters.Add(SQLiteHelper.CreateParameter("@SessionItems", DbType.String, sessItems.Length, sessItems));
                 cmd.Parameters.Add(SQLiteHelper.CreateParameter("@Locked", DbType.Boolean, false));
                 cmd.Parameters.Add(SQLiteHelper.CreateParameter("@SessionId", DbType.String, 80, id));
@@ -235,11 +235,11 @@ namespace Littlefish.SQLiteSessionStateProvider
                     cmd = conn.CreateCommand();
                     cmd.CommandText = "UPDATE Sessions SET Locked = @Locked, LockDate = @LockDate WHERE SessionId = @SessionId AND ApplicationName = @ApplicationName AND Locked = @Locked AND Expires > @Expires";
                     cmd.Parameters.Add(SQLiteHelper.CreateParameter("@Locked", DbType.Boolean, true));
-                    cmd.Parameters.Add(SQLiteHelper.CreateParameter("@LockDate", DbType.DateTime, DateTime.Now));
+                    cmd.Parameters.Add(SQLiteHelper.CreateParameter("@LockDate", DbType.DateTime, DateTime.UtcNow));
                     cmd.Parameters.Add(SQLiteHelper.CreateParameter("@SessionId", DbType.String, 80, id));
                     cmd.Parameters.Add(SQLiteHelper.CreateParameter("@ApplicationName", DbType.String, ApplicationName));
                     cmd.Parameters.Add(SQLiteHelper.CreateParameter("@Locked", DbType.Int32, false));
-                    cmd.Parameters.Add(SQLiteHelper.CreateParameter("@Expires", DbType.DateTime, DateTime.Now));
+                    cmd.Parameters.Add(SQLiteHelper.CreateParameter("@Expires", DbType.DateTime, DateTime.UtcNow));
 
                     if (cmd.ExecuteNonQuery() == 0)
                         // No record was updated because the record was locked or not found.
@@ -262,7 +262,7 @@ namespace Littlefish.SQLiteSessionStateProvider
                 {
                     expires = reader.GetDateTime(0);
 
-                    if (expires < DateTime.Now)
+                    if (expires < DateTime.UtcNow)
                     {
                         // The record was expired. Mark it as not locked.
                         locked = false;
@@ -274,7 +274,7 @@ namespace Littlefish.SQLiteSessionStateProvider
 
                     serializedItems = reader.GetString(1);
                     lockId = reader.GetInt32(2);
-                    lockAge = DateTime.Now.Subtract(reader.GetDateTime(3));
+                    lockAge = DateTime.UtcNow.Subtract(reader.GetDateTime(3));
                     actionFlags = (SessionStateActions)reader.GetInt32(4);
                     timeout = reader.GetInt32(5);
                 }
@@ -384,7 +384,7 @@ namespace Littlefish.SQLiteSessionStateProvider
             IDbConnection conn = new SQLiteConnection(_connectionString);
             IDbCommand cmd = conn.CreateCommand();
             cmd.CommandText = "UPDATE Sessions SET Locked = 0, Expires = @Expires WHERE SessionId = @SessionId AND ApplicationName = @ApplicationName AND LockId = @LockId";
-            cmd.Parameters.Add(SQLiteHelper.CreateParameter("@Expires", DbType.DateTime, DateTime.Now.AddMinutes(_config.Timeout.TotalMinutes)));
+            cmd.Parameters.Add(SQLiteHelper.CreateParameter("@Expires", DbType.DateTime, DateTime.UtcNow.AddMinutes(_config.Timeout.TotalMinutes)));
             cmd.Parameters.Add(SQLiteHelper.CreateParameter("@SessionId", DbType.String, 80, id));
             cmd.Parameters.Add(SQLiteHelper.CreateParameter("@ApplicationName", DbType.String, 255, ApplicationName));
             cmd.Parameters.Add(SQLiteHelper.CreateParameter("@LockId", DbType.Int32, lockId));
@@ -455,9 +455,9 @@ namespace Littlefish.SQLiteSessionStateProvider
             cmd.CommandText = "INSERT INTO Sessions (SessionId, ApplicationName, Created, Expires, LockDate, LockId, Timeout, Locked, SessionItems, Flags) Values(@SessionId, @ApplicationName, @Created, @Expires, @LockDate, @LockId, @Timeout, @Locked, @SessionItems, @Flags)";
             cmd.Parameters.Add(SQLiteHelper.CreateParameter("@SessionId", DbType.String, 80, id));
             cmd.Parameters.Add(SQLiteHelper.CreateParameter("@ApplicationName", DbType.String, ApplicationName));
-            cmd.Parameters.Add(SQLiteHelper.CreateParameter("@Created", DbType.DateTime, DateTime.Now));
-            cmd.Parameters.Add(SQLiteHelper.CreateParameter("@Expires", DbType.DateTime, DateTime.Now.AddMinutes((Double)timeout)));
-            cmd.Parameters.Add(SQLiteHelper.CreateParameter("@LockDate", DbType.DateTime, DateTime.Now));
+            cmd.Parameters.Add(SQLiteHelper.CreateParameter("@Created", DbType.DateTime, DateTime.UtcNow));
+            cmd.Parameters.Add(SQLiteHelper.CreateParameter("@Expires", DbType.DateTime, DateTime.UtcNow.AddMinutes((Double)timeout)));
+            cmd.Parameters.Add(SQLiteHelper.CreateParameter("@LockDate", DbType.DateTime, DateTime.UtcNow));
             cmd.Parameters.Add(SQLiteHelper.CreateParameter("@LockId", DbType.Int32, 0));
             cmd.Parameters.Add(SQLiteHelper.CreateParameter("@Timeout", DbType.Int32, timeout));
             cmd.Parameters.Add(SQLiteHelper.CreateParameter("@Locked", DbType.Boolean, false));
@@ -502,7 +502,7 @@ namespace Littlefish.SQLiteSessionStateProvider
             IDbConnection conn = new SQLiteConnection(_connectionString);
             IDbCommand cmd = conn.CreateCommand();
             cmd.CommandText = "UPDATE Sessions SET Expires = @Expires WHERE SessionId = @SessionId AND ApplicationName = @ApplicationName";
-            cmd.Parameters.Add(SQLiteHelper.CreateParameter("@Expires", DbType.DateTime, DateTime.Now.AddMinutes(_config.Timeout.TotalMinutes)));
+            cmd.Parameters.Add(SQLiteHelper.CreateParameter("@Expires", DbType.DateTime, DateTime.UtcNow.AddMinutes(_config.Timeout.TotalMinutes)));
             cmd.Parameters.Add(SQLiteHelper.CreateParameter("@SessionId", DbType.String, 80, id));
             cmd.Parameters.Add(SQLiteHelper.CreateParameter("@ApplicationName", DbType.String, ApplicationName));
 
@@ -569,7 +569,7 @@ namespace Littlefish.SQLiteSessionStateProvider
             IDbConnection conn = new SQLiteConnection(_connectionString);
             IDbCommand cmd = conn.CreateCommand();
             cmd.CommandText = "DELETE FROM Sessions WHERE Expires < @Expires";
-            cmd.Parameters.Add(SQLiteHelper.CreateParameter("@Expires", DbType.DateTime, DateTime.Now));
+            cmd.Parameters.Add(SQLiteHelper.CreateParameter("@Expires", DbType.DateTime, DateTime.UtcNow));
             conn.Open();
             cmd.ExecuteNonQuery();
             conn.Close();
