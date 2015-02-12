@@ -75,7 +75,7 @@ namespace Littlefish.SQLiteSessionStateProvider
             //This will allow databse files to be specified as ~/Folder
             var currentContext = HttpContext.Current;
             if (currentContext != null)
-                databaseFile = currentContext.Server.MapPath(databaseFile);
+                databaseFile = currentContext.Server.MapPath("/") + databaseFile;
             
             _connectionString = "Data Source =" + databaseFile;
 
