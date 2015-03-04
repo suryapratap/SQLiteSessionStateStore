@@ -26,3 +26,18 @@ Just add the following configuration to your web.config file
 	</sessionState>
 </system.web>
 
+Performance
+========================================
+There are two parameters, which will slow down SQLite performance when data is rapidly changes.
+Because this will most likely occur for a session state database, it is now possible to pass additional parameters to the data base connection.
+This can be used, to disable "Synchronous" and "Journal Mode" for best performance (but less security). Read about those parameters yourself.
+
+The connection string can be modified with a new parameter (connectionParameters) in the web.config-file.
+
+<system.web>
+	<sessionState mode="Custom" customProvider="Sqlite">
+	  <providers>
+		<add name="Sqlite" type="Littlefish.SQLiteSessionStateProvider.SQLiteSessionStateStoreProvider, Littlefish.SQLiteSessionStateProvider" databaseFile="~/App_Data/SessionState.db3" connectionParameters="Journal Mode=Off;Version=3;Synchronous=Off" />
+	  </providers>
+	</sessionState>
+</system.web>
