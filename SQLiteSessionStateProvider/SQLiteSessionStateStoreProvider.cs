@@ -74,10 +74,17 @@ namespace Littlefish.SQLiteSessionStateProvider
             //Try and map the database to the location on the server. 
             //This will allow databse files to be specified as ~/Folder
             var currentContext = HttpContext.Current;
-            if (currentContext != null && !Path.IsPathRooted(databaseFile))
-                databaseFile = Path.Combine(currentContext.Server.MapPath("/"), databaseFile);
+						if (currentContext != null && !Path.IsPathRooted(databaseFile))
+						{
+							databaseFile = Path.Combine(currentContext.Server.MapPath("/"), databaseFile);
+						}
             
             _connectionString = "Data Source =" + databaseFile;
+
+						if (config["connectionParameters"] != null)
+						{
+							_connectionString += ";" + config["connectionParameters"];
+						}
 
             var schemagenerator = new SchemaGenerator(databaseFile);
             schemagenerator.Create();
